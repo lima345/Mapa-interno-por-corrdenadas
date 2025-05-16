@@ -22,11 +22,9 @@ Este projeto implementa um mapa interativo usando a biblioteca **Leaflet** com d
 
 No layout da página, os botões possuem um design moderno com cantos arredondados para melhor usabilidade e aparência.
 
-Exemplo do estilo do botão:
+Exemplo visual do botão:
 
-<div style="display: inline-block; background-color:#2196f3; color:white; padding:10px 20px; border-radius:8px; font-weight:bold; cursor:pointer; user-select:none;">
-  Botão Arredondado
-</div>
+[![Botão Arredondado](https://img.shields.io/badge/Botão-Arredondado-2196f3?style=for-the-badge&logo=leaflet&logoColor=white)](#)
 
 Você pode ver esse estilo no botão **Ativar Trena**, **Imagens de Satélite** e outros botões do projeto.
 
@@ -34,7 +32,7 @@ Você pode ver esse estilo no botão **Ativar Trena**, **Imagens de Satélite** 
 
 ## Visualização
 
-![Screenshot do mapa interativo com botões arredondados](link-para-imagem-exemplo.png)
+![Screenshot do mapa interativo com botões arredondados](https://link-para-imagem-exemplo.png)
 
 ---
 
