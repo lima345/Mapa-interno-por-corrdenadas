@@ -1,4 +1,4 @@
-# 🗺️ Mapa Interativo com Trena – Master EVO
+# 🗺️ Mapa Interativo com Trena – Lima
 
 Este projeto apresenta um mapa interativo desenvolvido com **Leaflet.js**, ideal para medições rápidas e navegação precisa.
 
