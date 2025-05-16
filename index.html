@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mapa Interativo com Trena</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f9f9f9;
+        }
+        #map-container {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        #controls {
+            padding: 10px;
+            background-color: #ffffff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+        #controls h2 {
+            margin-top: 0;
+        }
+        #controls input[type="text"] {
+            padding: 6px 10px;
+            width: 260px;
+            margin-right: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+        #controls button {
+            padding: 6px 12px;
+            margin: 4px;
+            background-color: #3f51b5;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #controls button:hover {
+            background-color: #2c3eaa;
+        }
+        #map {
+            flex-grow: 1;
+        }
+        #info-coords {
+            margin-top: 10px;
+            display: none;
+        }
+
+        /* Painel de aviso da trena */
+        #trenaModal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
+            padding: 20px 30px;
+            text-align: center;
+            z-index: 2000;
+            display: none;
+        }
+        #trenaModal button {
+    background-color: #2196f3;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    margin-top: 15px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+}
+#trenaModal button:hover {
+    background-color: #1976d2;
+}
+
+    </style>
+</head>
+<body>
+
+    <div id="controls">
+        <h2>/// Internal prototype &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;   Mapa de coordenadas</h2>
+        <input type="text" id="coords" placeholder="Ex: -23.373647, -46.027087" />
+        <button onclick="updateMap()">Mostrar no Mapa</button>
+        <button onclick="toggleContours()">Curvas de Nível</button>
+        <button onclick="toggleSatellite()">Satélite</button>
+        <button onclick="ativarTrena()">Ativar Trena</button>
+        <button onclick="apagarMarcadores()">Apagar Marcadores</button>
+
+        <div id="info-coords">
+            <label>Coordenadas clicadas:</label>
+            <input type="text" id="coordInput" readonly />
+        </div>
+    </div>
+
+    <!-- Painel modal para ativação da trena -->
+    <div id="trenaModal">
+        <p><strong>Modo trena ativado</strong><br>
+        Clique em dois pontos no mapa para medir distância.</p>
+        <button onclick="fecharTrenaModal()">OK</button>
+    </div>
+
+    <div id="map-container">
+        <div id="map"></div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        var map = L.map('map').setView([0, 0], 2);
+
+        var baseMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        var satelliteLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+            maxZoom: 20,
+            subdomains:['mt0','mt1','mt2','mt3']
+        });
+
+        var contoursLayer;
+        var marker;
+        var trenaAtiva = false;
+        var pontoInicial = null;
+        var pontoFinal = null;
+        var linhaMedida = null;
+
+        function updateMap() {
+            var input = document.getElementById('coords').value.trim();
+            var parts = input.split(',');
+            if (parts.length === 2) {
+                var lat = parseFloat(parts[0]);
+                var lon = parseFloat(parts[1]);
+                if (!isNaN(lat) && !isNaN(lon)) {
+                    addMarker(lat, lon);
+                } else {
+                    alert("Por favor, insira coordenadas válidas.");
+                }
+            } else {
+                alert("Formato inválido. Use: latitude, longitude");
+            }
+        }
+
+        function addMarker(lat, lon) {
+            if (marker) map.removeLayer(marker);
+            marker = L.marker([lat, lon]).addTo(map)
+                .bindPopup(`Latitude: ${lat} <br> Longitude: ${lon}`)
+                .openPopup();
+            map.setView([lat, lon], 12);
+        }
+
+        function toggleContours() {
+            if (contoursLayer) {
+                map.removeLayer(contoursLayer);
+                contoursLayer = null;
+            } else {
+                contoursLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenTopoMap contributors'
+                }).addTo(map);
+            }
+        }
+
+        function toggleSatellite() {
+            if (map.hasLayer(satelliteLayer)) {
+                map.removeLayer(satelliteLayer);
+                baseMap.addTo(map);
+            } else {
+                map.removeLayer(baseMap);
+                satelliteLayer.addTo(map);
+            }
+        }
+
+        function ativarTrena() {
+            document.getElementById("trenaModal").style.display = "block";
+        }
+
+        function fecharTrenaModal() {
+            document.getElementById("trenaModal").style.display = "none";
+            trenaAtiva = true;
+        }
+
+        map.on('click', function(e) {
+            var lat = e.latlng.lat.toFixed(6);
+            var lon = e.latlng.lng.toFixed(6);
+            document.getElementById('coordInput').value = `${lat}, ${lon}`;
+            document.getElementById('info-coords').style.display = 'block';
+
+            if (trenaAtiva) {
+                if (!pontoInicial) {
+                    pontoInicial = L.marker([lat, lon]).addTo(map);
+                } else if (!pontoFinal) {
+                    pontoFinal = L.marker([lat, lon]).addTo(map);
+                    linhaMedida = L.polyline([pontoInicial.getLatLng(), pontoFinal.getLatLng()], {
+                        color: 'red'
+                    }).addTo(map);
+                    var distancia = pontoInicial.getLatLng().distanceTo(pontoFinal.getLatLng());
+                    linhaMedida.bindPopup(`Distância: ${(distancia / 1000).toFixed(2)} km`).openPopup();
+                    trenaAtiva = false;
+                }
+            } else {
+                addMarker(lat, lon);
+            }
+        });
+
+        function apagarMarcadores() {
+            if (marker) {
+                map.removeLayer(marker);
+                marker = null;
+            }
+            if (pontoInicial) {
+                map.removeLayer(pontoInicial);
+                pontoInicial = null;
+            }
+            if (pontoFinal) {
+                map.removeLayer(pontoFinal);
+                pontoFinal = null;
+            }
+            if (linhaMedida) {
+                map.removeLayer(linhaMedida);
+                linhaMedida = null;
+            }
+            document.getElementById('coordInput').value = "";
+            document.getElementById('info-coords').style.display = 'none';
+        }
+    </script>
+
+</body>
+</html>
